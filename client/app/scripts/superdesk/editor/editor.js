@@ -25,12 +25,19 @@ function EditorService() {
      */
     this.storeSelection = function storeSelection(node) {
         var selection = document.getSelection();
-        if (selection.anchorNode == null || selection.anchorNode.nodeType !== TEXT_TYPE) {
+        if (selection.anchorNode == null) {
             return;
         }
 
-        var next = selection.anchorNode.splitText(selection.anchorOffset),
+        var next,
             span = document.createElement('span');
+
+        if (selection.anchorNode.nodeType === TEXT_TYPE) {
+            next = selection.anchorNode.splitText(selection.anchorOffset);
+        } else {
+            next = null;
+        }
+
         span.classList.add(MARKER_CLASS);
         selection.anchorNode.parentNode.insertBefore(span, next);
     };
@@ -38,7 +45,7 @@ function EditorService() {
     /**
      * Reset stored anchor position in given node
      */
-    this.resetSelection = function resetSelection(node, data) {
+    this.resetSelection = function resetSelection(node) {
         var marks = node.getElementsByClassName(MARKER_CLASS),
             selection = document.getSelection(),
             range = document.createRange();
@@ -320,10 +327,10 @@ angular.module('superdesk.editor', [])
                  * Remove spellcheck highlights from node
                  */
                 function removeSpellcheck(node) {
-                    var selection = editor.storeSelection(node),
-                        html = spellcheck.clean(node);
+                    editor.storeSelection(node);
+                    var html = spellcheck.clean(node);
                     node.innerHTML = html;
-                    editor.resetSelection(node, selection);
+                    editor.resetSelection(node);
                     return html;
                 }
 
