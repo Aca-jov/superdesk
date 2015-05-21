@@ -48,17 +48,26 @@ function EditorService() {
     this.resetSelection = function resetSelection(node) {
         var marks = node.getElementsByClassName(MARKER_CLASS),
             selection = document.getSelection(),
-            range = document.createRange();
+            range = document.createRange(),
+            mark = marks.item(0);
 
         if (selection.rangeCount) {
             selection.removeAllRanges();
         }
 
-        while (marks.length) {
-            var mark = marks.item(0);
-            range.setStartBefore(mark);
-            selection.addRange(range);
-            mark.parentNode.removeChild(mark);
+        if (mark) {
+            var prev = mark.previousSibling;
+            if (prev && prev.nodeType === 3) {
+                // firefox issue with contenteditable
+                // more info at https://github.com/timdown/rangy/issues/17
+                removeNode(mark);
+                selection.collapse(prev, prev.length);
+            } else {
+                range.setStartBefore(mark);
+                selection.addRange(range);
+                selection.collapseToStart();
+                removeNode(mark);
+            }
         }
     };
 
@@ -67,6 +76,10 @@ function EditorService() {
         this.editor = null;
         this.readOnly = false;
     };
+
+    function removeNode(node) {
+        node.parentNode.removeChild(node);
+    }
 
     function preventEditing(event) {
         event.preventDefault();
